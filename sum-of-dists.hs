@@ -1,5 +1,7 @@
+import GHC.List (foldl')
+
 scalarProduct :: [Double] -> [Double] -> Double
-scalarProduct vec1 vec2 = foldl (+) 0 $ zipWith (*) vec1 vec2
+scalarProduct vec1 vec2 = foldl' (+) 0 $ zipWith (*) vec1 vec2
 
 euclideanNorm :: [Double] -> Double
 euclideanNorm vec = sqrt $ scalarProduct vec vec
@@ -16,7 +18,7 @@ allPairs l = allPairs' l []
 		allPairs' (x:xs) aggl = allPairs' xs (aggl ++ [(x,y) | y <- xs])
 		
 completeDistance :: [[Double]] -> Double
-completeDistance points = foldl (+) 0 [distance (fst pair) (snd pair) | pair <- pairs]
+completeDistance points = foldl' (+) 0 [distance (fst pair) (snd pair) | pair <- pairs]
 	where
 		pairs = allPairs points
 		
