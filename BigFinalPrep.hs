@@ -2,6 +2,18 @@
 import Data.List
 import Data.Maybe
 
+--11.9.2014
+--ins x [] = [x]
+--ins x (y:ys) = (x:y:ys) : (y:(ins x ys)) 
+
+--permutations [] = []
+--permutations (x:xs) = [x:ts | ts <- permutations xs ]
+
+
+--permutations [] = []
+--permutations (x) = [x]
+--permutations (xs:x:ys) = permutations xs ++ [x] ++ permutations ys
+
 --14.07.2015
 --map ​(​head [(\couple­>fst couple + snd couple)]​) (​foldr1 (++) [[(1,2)],[(3,4)]])  ---> [3,7]
 --[zip [x] [x] | x <­ [1..5]] ---> [[(1,1)],[(2,2)],[(3,3)],[(4,4)],[(5,5)]]
@@ -22,6 +34,7 @@ getEvens = (\l -> [y |y <- l, even y])
 addDefault val [] = [val]
 addDefault val l  = l
 
+--sumMinFix :: [(a -> a)] -> [a] -> a
 sumMinFix fl xl =
  sum
   (map 
@@ -75,9 +88,12 @@ evaluation "haskell" = [("evaluation", "lazy")]
 evaluation "c++" = evaluation "scheme"
 purity lang = if lang == "haskell" then [("pure", "true")] else []
    
-   
 --05.08.2020
-argMin f l = head (filter (\item -> (f item) == (minimum (map f l))) l)
+--argMin f l = map (\item -> (item, f item)) l
+
+--argMin f l = head (filter (\item -> (f item) == (minimum (map f l))) l)
+
+argMin f l = foldr1 (\x y -> if f(x)<f(y) then x else y) l
 
 sth track = map 
   (\pointPair -> abs ((snd (snd pointPair) - snd (fst pointPair)) / (fst (snd pointPair) - fst (fst pointPair))))
@@ -85,11 +101,15 @@ sth track = map
 
 maxSlope track = maximum
  (map 
-  (\pointPair -> abs ((snd (snd pointPair) - snd (fst pointPair)) / (fst (snd pointPair) - fst (fst pointPair))))
+  (\pointPair -> abs (fromIntegral (snd (snd pointPair) - snd (fst pointPair)) / fromIntegral (fst (snd pointPair) - fst (fst pointPair))))
   (zip track (tail track)))
   
 easiestTrackUnder maxLen tracks = 
    argMin maxSlope (filter (\track -> fst (last track) <= maxLen) tracks)
+
+tracks = [[(0, 900), (100, 910), (200, 925), (300, 905), (600, 950)],[(0, 1300), (100, 1305), (500, 1340), (800, 1360), (1000, 1320)],[(0, 800), (200, 830), (300, 845), (600, 880), (800, 830)]]
+
+-- argMin maxSlope (filter (\track -> (sum (map fst track)) <= maxLen) tracks)
 
 
 --16.09.2020
@@ -107,18 +127,23 @@ easiestTrackUnder maxLen tracks =
 -- avgDuration artist = sum (filter (\x -> (sel1 x) == artist) pl) / length (filter (\x -> (sel1 x) == artist) pl)
 -- option1 = last (sortOn sel3 (delete piece pl))
 -- option2 =  last (sortOn sel3 (filter (\x -> (avgDuration (sel1 x)) < (avgDuration (sel1 piece))) pl))
--- in if not (null option1) then (option1)
+-- in if not (null option1) then (option1  )
 --  else if not (null option2) then (option2  )
 --   else last (sortOn sel3 (filter (\x -> (sel3 x) <= (sel3 piece)) pl))
 
 recommender :: [(String, String, Int)] -> (String, String, Int) -> String
 recommender pl = \piece@(pAuth,pN,pLen) ->
  let 
- --fromIntegral, otherwise we cannot divide
  avgDuration artist = fromIntegral (sum [xLen | x@(xAuth,xN,xLen)<-pl, xAuth == artist]) / fromIntegral (length [xLen | x@(xAuth,xN,xLen)<-pl, xAuth == artist])
+ --option1 = last [filter (\x@(xAuth,xN,xLen) -> xAuth == pAuth) (last (delete piece pl))
+ --option2 = last (filter (\x@(xAuth,xN,xLen) -> (avgDuration xAuth) < (avgDuration pAuth)) pl)
  option1 = [xN | x@(xAuth,xN,xLen)<-(delete piece pl), xLen >= pLen, xAuth == pAuth]
  option2 = [xN | x@(xAuth,xN,xLen)<-pl, avgDuration xAuth < avgDuration pAuth]
  in if not (null option1) then (head option1)
   else if not (null option2) then (last option2)
+   --else last (filter (\x@(xAuth,xN,xLen) -> xLen <= pLen) pl) 
    else if (null [xN | x@(xAuth,xN,xLen)<-pl, xLen > pLen]) then pN else head [xN | x@(xAuth,xN,xLen)<-pl, xLen > pLen]
    
+   
+--Тестчета
+ones = 1 : ones
