@@ -143,7 +143,31 @@ recommender pl = \piece@(pAuth,pN,pLen) ->
   else if not (null option2) then (last option2)
    --else last (filter (\x@(xAuth,xN,xLen) -> xLen <= pLen) pl) 
    else if (null [xN | x@(xAuth,xN,xLen)<-pl, xLen > pLen]) then pN else head [xN | x@(xAuth,xN,xLen)<-pl, xLen > pLen]
-   
-   
+
+
+--13.07.2021
+data Tree a = EmptyTree | Node {
+								value :: a,
+								left  :: Tree a,
+								right :: Tree a
+						} deriving (Show,Read)
+
+treeWords :: (Tree Char) -> [String]
+treeWords EmptyTree = []
+treeWords (Node v EmptyTree EmptyTree) = [[v]]
+treeWords (Node v l r) = map (v:) (wl ++ wr)
+  where
+	wl = treeWords l
+	wr = treeWords r
+
+exampleTree = (Node 'X' (Node 'l' (Node 'a' EmptyTree EmptyTree) (Node 'b' EmptyTree EmptyTree)) (Node 'r' EmptyTree (Node 'k' EmptyTree EmptyTree)))	
+	
+quickSort :: (Ord a) => [a] -> [a]
+quickSort [] = []
+quickSort (x:xs) = lesser ++ [x] ++ greater
+  where
+	lesser  = filter (<=x) xs
+	greater = filter (>x) xs
+
 --Тестчета
 ones = 1 : ones
