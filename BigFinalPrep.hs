@@ -74,7 +74,7 @@ bestFit 4 = 5
 --10.09.2019
 addIfNew x l = if not (elem x l) then (x:l) else l
  
---annotate :: [(String,[(String,String)])] -> [String -> [(String,String)]] -> [(String,[(String,String)])]
+annotate :: [(String,[(String,String)])] -> [String -> [(String,String)]] -> [(String,[(String,String)])]
 annotate db annotators =
  map
  (\(item, labels) ->
@@ -168,6 +168,20 @@ quickSort (x:xs) = lesser ++ [x] ++ greater
   where
 	lesser  = filter (<=x) xs
 	greater = filter (>x) xs
+	
+	
+data BigTree a = EmptyBTree | BNode {
+								bvalue :: a,
+								children :: [BigTree a]
+						} deriving (Show,Read)
+						
+bigTreeWords :: (BigTree Char) -> [String]
+bigTreeWords EmptyBTree = []
+bigTreeWords (BNode v []) = [[v]]
+bigTreeWords (BNode v cl) = map (v:) (concatMap bigTreeWords cl)
+
+exampleBigTree = BNode 'X' [(BNode 'l' [(BNode 'a' []), (BNode 'b' [])]), (BNode 'r' [EmptyBTree, (BNode 'k' [])]), BNode 'c' []]
+
 
 --Тестчета
 ones = 1 : ones
