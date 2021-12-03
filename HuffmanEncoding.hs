@@ -88,7 +88,14 @@ findMinWithIndex l project =
 
 sort :: (Ord b) => (a -> b) -> [a] -> [a]
 sort _ []     = []
-sort f (x:xs) = [y | y<-xs, f y < f x] ++ [x] ++ [y | y<-xs, f y >= f x]
+sort f (x:xs) = [y | y <- sort f xs, f y < f x] ++ [x] ++ [y | y <- sort f xs, f y >= f x]
+
+insert :: (Ord b) => (a -> b) -> [a] -> a -> [a]
+insert _ [] x = [x]
+insert f (x : xs) y =
+  if f x < f y
+    then x : insert f xs y
+    else y : x : xs
 
 huffmanTree :: (Eq a) => [a] -> BinaryTree a Integer
 huffmanTree l = go $ sort weight $ map (uncurry Leaf) $ occurenceMap l
@@ -96,7 +103,7 @@ huffmanTree l = go $ sort weight $ map (uncurry Leaf) $ occurenceMap l
     go :: [BinaryTree a Integer] -> BinaryTree a Integer
     go []           = error "Empty string"
     go [finalTree]  = finalTree
-    go (t1:t2:rest) = go $ sort weight $ spliceTrees t1 t2 : rest
+    go (t1:t2:rest) = go $ insert weight rest $ spliceTrees t1 t2
     {-go [finalTree] = finalTree
     go forest      = go newForest
       where
