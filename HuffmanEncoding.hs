@@ -88,7 +88,10 @@ findMinWithIndex l project =
 
 sort :: (Ord b) => (a -> b) -> [a] -> [a]
 sort _ []     = []
-sort f (x:xs) = [y | y <- sort f xs, f y < f x] ++ [x] ++ [y | y <- sort f xs, f y >= f x]
+sort f (x:xs) = smaller ++ [x] ++ larger
+  where
+    smaller = sort f [y | y <- xs, f y < f x]
+    larger = sort f [y | y <- xs, f y >= f x]
 
 insert :: (Ord b) => (a -> b) -> [a] -> a -> [a]
 insert _ [] x = [x]
