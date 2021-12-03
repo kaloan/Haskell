@@ -5,8 +5,9 @@
 {-# OPTIONS_GHC -fwarn-incomplete-uni-patterns #-} -- warn about incomplete patterns v2
 {-# LANGUAGE RankNTypes #-}
 
-import           Data.List  (delete, foldl')
+import           Data.List  (delete, foldl', sortBy)
 import           Data.Maybe (fromJust)
+--import           Data.Sort  (sortOn)
 
 
 occurenceMap :: (Eq a) => [a] -> [(a,Integer)]
@@ -37,7 +38,7 @@ instance Show Bit where
 treeToEncoding :: BinaryTree a b -> [(a, [Bit])]
 treeToEncoding tree = go tree []
   where
-    go (Leaf x _) path     = [(x, path)]
+    go (Leaf x _) path     = [(x, reverse path)]
     go (Node _ lT rT) path = go lT (Zero : path) ++ go rT (One : path)
 
 invert :: (a, b) -> (b, a)
@@ -58,7 +59,7 @@ weight (Node x _ _) = x
 
 spliceTrees :: (Ord b, Num b) => BinaryTree a b -> BinaryTree a b -> BinaryTree a b
 spliceTrees fT sT =
-  if wFT > wST
+  if wFT <= wST
     then Node (wFT + wST) fT sT
     else Node (wFT + wST) sT fT
   where
@@ -85,12 +86,18 @@ findMinWithIndex l project =
       ((head l, 0), 0)
       l
 
+sort :: (Ord b) => (a -> b) -> [a] -> [a]
+sort _ []     = []
+sort f (x:xs) = [y | y<-xs, f y < f x] ++ [x] ++ [y | y<-xs, f y >= f x]
+
 huffmanTree :: (Eq a) => [a] -> BinaryTree a Integer
-huffmanTree l = go $ map (uncurry Leaf) $ occurenceMap l
+huffmanTree l = go $ sort weight $ map (uncurry Leaf) $ occurenceMap l
   where
     go :: [BinaryTree a Integer] -> BinaryTree a Integer
-    go [finalTree] = finalTree
-    go [finalTree1, finalTree2] = spliceTrees finalTree1 finalTree2
+    go []           = error "Empty string"
+    go [finalTree]  = finalTree
+    go (t1:t2:rest) = go $ sort weight $ spliceTrees t1 t2 : rest
+    {-go [finalTree] = finalTree
     go forest      = go newForest
       where
         smallest = findMinWithIndex forest weight
@@ -98,7 +105,7 @@ huffmanTree l = go $ map (uncurry Leaf) $ occurenceMap l
         secondSmallest = findMinWithIndex removedSmallest weight
         removedSecondSmallest = deleteByIndex removedSmallest (snd secondSmallest)
         newTree = spliceTrees (fst smallest) (fst secondSmallest)
-        newForest = newTree : removedSecondSmallest
+        newForest = newTree : removedSecondSmallest-}
 
 encodeMap :: (Eq a) => [a] -> [(a, [Bit])]
 encodeMap = treeToEncoding . huffmanTree
@@ -110,5 +117,5 @@ encode l = concatMap (\x -> fromJust $ lookup x encodingMap) l
 
 main :: IO ()
 main = do
-  let endcodedStr = encode "abracadabra"
+  let endcodedStr = encode "abra"
   print endcodedStr
