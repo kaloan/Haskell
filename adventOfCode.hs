@@ -4,6 +4,12 @@
 numberOfIncreases :: (Num a, Ord a) => [a] -> Int
 numberOfIncreases l = length . filter (> 0) $ zipWith (-) (tail l) l
 
+numberOfIncreases' :: (Num a, Ord a) => [a] -> Int
+numberOfIncreases' l = length . filter (> 0) $ zipWith (-) (tail ll) ll
+	where
+		ll = zipWith (+) l $ zipWith (+) (tail l) (tail $ tail l)
+
+
 -- 02.12.21
 multPair :: (Num a) => (a, a) -> a
 multPair = uncurry (*)
@@ -25,6 +31,7 @@ finalPosition = foldr go (0, 0)
 
 day2Task :: (Num a, Ord a) => [Instruction a] -> a
 day2Task = multPair . finalPosition
+
 santaInstructions :: (Num a, Ord a) => [Instruction a]
 santaInstructions = [
   Forward 5,
