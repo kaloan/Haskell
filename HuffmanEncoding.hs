@@ -45,13 +45,19 @@ invert :: (a, b) -> (b, a)
 invert (x, y) = (y, x)
 
 decode :: [Bit] -> BinaryTree a Integer -> [a]
-decode encoded hT = go encoded [] $ map invert $ treeToEncoding hT
+decode encoded hT = go encoded []
   where
-    go [] _ _ = []
-    go (bit : bits) nonmatched codeMap =
-      case lookup (bit:nonmatched) codeMap of
-        Nothing  -> go bits (bit : nonmatched) codeMap
-        (Just x) -> x : go bits [] codeMap
+    codeMap = map ((\(enc, val)->(reverse enc, val)) . invert) $ treeToEncoding hT
+    go [] _ = []
+    go (bit : bits) nonmatched =
+      case lookup searchForMatch codeMap of
+        Nothing  -> go bits searchForMatch
+        (Just x) -> x : go bits []
+      where
+        searchForMatch = bit : nonmatched
+        --By reversing the encoded strings we can use constant complexity (:)
+        --rather than the linear complexity (++)
+        --searchForMath = nonmatched ++ [bit]
 
 weight :: BinaryTree a b -> b
 weight (Leaf _ x)   = x
