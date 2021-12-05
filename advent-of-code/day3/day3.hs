@@ -11,7 +11,7 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.List     (partition, foldl')
+import           Data.List     (foldl', partition)
 import           System.IO
 
 -- 03.12.21
@@ -56,7 +56,7 @@ transpose []       = []
 transpose ([] : _) = []
 transpose xs       = map head xs : transpose (map tail xs)
 
-higherOccurencesInRow :: [Bit] -> Bit
+higherOccurencesInRow :: Binary -> Bit
 higherOccurencesInRow l = if zeros > ones then Zero else One
   where
     (zeros, ones) = foldr go (0, 0) l
@@ -76,8 +76,22 @@ powerConsumption lss = gamma * epsilon
     gamma = binaryToInt higherBits
     epsilon = binaryToInt $ binaryComplement higherBits
 
-lifeSupportRating :: [Binary] -> Integer
-lifeSupportRating lss = foldl' (\acc) (0,0) $ mostInColumns lss
+lifeSupportRating :: [Binary] -> ([Binary] -> Binary) -> Integer
+lifeSupportRating lss getNextBin = go lss [] $ getNextBin lss
+  where
+    go [] _ _ = error "Reached empty list when calculating lifeSupportRating"
+    go [bin] revTillNow _ = binaryToInt $ reverse revTillNow ++ bin
+    go xss revTillNow (m : _) = go nextSearch (m : revTillNow) nextBin
+      where
+        nextSearch = map tail $ filter ((== m) . head) xss
+        nextBin = getNextBin nextSearch
+    go _ _ _ = error "Some error when calculating lifeSupportRating"
+
+oxygenGeneratorRating :: [Binary] -> Integer
+oxygenGeneratorRating lss = lifeSupportRating lss mostInColumns
+
+co2ScrubberRating :: [Binary] -> Integer
+co2ScrubberRating lss = lifeSupportRating lss (binaryComplement . mostInColumns)
 
 readInt :: String -> Int
 readInt = read
@@ -95,8 +109,30 @@ readInteger = read
 --readIntegerBinary :: String -> [Integer]
 --readIntegerBinary = map readInteger
 
+diagnosticReportTest :: [Binary]
+diagnosticReportTest =
+  map
+    binaryInIntToBinary
+    [ [0, 0, 1, 0, 0],
+      [1, 1, 1, 1, 0],
+      [1, 0, 1, 1, 0],
+      [1, 0, 1, 1, 1],
+      [1, 0, 1, 0, 1],
+      [0, 1, 1, 1, 1],
+      [0, 0, 1, 1, 1],
+      [1, 1, 1, 0, 0],
+      [1, 0, 0, 0, 0],
+      [1, 1, 0, 0, 1],
+      [0, 0, 0, 1, 0],
+      [0, 1, 0, 1, 0]
+    ]
+
 main :: IO ()
 main = do
   contents <- readFile "input.txt"
   let diagnosticReport = map readBinary $ words contents
-  print $ powerConsumption diagnosticReport
+  let powCons = powerConsumption diagnosticReport
+  let oGR = oxygenGeneratorRating diagnosticReport
+  let co2SR = co2ScrubberRating diagnosticReport
+  print powCons
+  print $ oGR * co2SR
