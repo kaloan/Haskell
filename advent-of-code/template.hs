@@ -11,6 +11,7 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
+import           Data.List     (foldl')
 import           System.IO
 
 -- 01.12.21
