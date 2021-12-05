@@ -11,11 +11,9 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.List     (delete, foldl', sortBy)
+import           Data.List     (foldl')
 import           Data.Maybe    (fromJust)
 import           System.IO
-
---import           Data.Sort  (sortOn)
 
 occurenceMap :: (Eq a) => [a] -> [(a, Integer)]
 occurenceMap l = go l []
@@ -102,27 +100,9 @@ findMinWithIndex l project =
       ((head l, 0), 0)
       l
 
-sort :: (Ord b) => (a -> b) -> [a] -> [a]
-sort _ [] = []
-sort f (x : xs) = smaller ++ [x] ++ larger
-  where
-    smaller = sort f [y | y <- xs, f y < f x]
-    larger = sort f [y | y <- xs, f y >= f x]
-
-insert :: (Ord b) => (a -> b) -> [a] -> a -> [a]
-insert _ [] x = [x]
-insert f (x : xs) y =
-  if f x < f y
-    then x : insert f xs y
-    else y : x : xs
-
 huffmanTree :: (Eq a) => [a] -> BinaryTree a Integer
-huffmanTree l = go $ sort weight $ map (uncurry Leaf) $ occurenceMap l
+huffmanTree l = go $ map (uncurry Leaf) $ occurenceMap l
   where
-    -- go :: [BinaryTree a Integer] -> BinaryTree a Integer
-    -- go []               = error "Empty string"
-    -- go [finalTree]      = finalTree
-    -- go (t1 : t2 : rest) = go $ insert weight rest $ spliceTrees t1 t2
     go [finalTree] = finalTree
     go forest = go newForest
       where
@@ -132,9 +112,6 @@ huffmanTree l = go $ sort weight $ map (uncurry Leaf) $ occurenceMap l
         removedSecondSmallest = deleteByIndex (snd secondSmallest) removedSmallest
         newTree = spliceTrees (fst smallest) (fst secondSmallest)
         newForest = newTree : removedSecondSmallest
-
---encodeMap :: (Eq a) => [a] -> [(a, [Bit])]
---encodeMap = treeToEncoding . huffmanTree
 
 encode :: (Eq a) => [a] -> ([Bit], BinaryTree a Integer)
 encode l = (concatMap (\x -> fromJust $ lookup x encodingMap) l, hT)
@@ -168,7 +145,9 @@ decodeFile encodedFile treeFile = do
   let encoded = readBits encoded'
   let tree = readHuffmanTree tree'
   let decoded = decode encoded tree
+  putStrLn "--- START OF DECODED FILE ---"
   putStrLn decoded
+  putStrLn "--- END OF DECODED FILE ---"
 
 main :: IO ()
 main = do
