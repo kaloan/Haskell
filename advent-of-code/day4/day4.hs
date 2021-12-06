@@ -11,14 +11,30 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
+import           Data.Array.MArray
+import           Data.List         (foldl')
+import           Data.Strings      (strSplit, strSplitAll)
 import           System.IO
 
--- 01.12.21
+-- 04.12.21
 
 readInt :: String -> Int
 readInt = read
 
+readIntList :: String -> [Int]
+readIntList = read
+
+mainWork :: FilePath -> IO ()
+mainWork filename = do
+  contents <- readFile filename
+  let (numsToParse, boardsToParse) = strSplit "\n\n" contents
+  let nums = readIntList $ "[" ++ numsToParse ++ "]"
+  let boards = strSplitAll "\n\n" boardsToParse
+  --arrayExample :: MArray (STUArray s) Int (ST s)
+  --let arrayExample = newArray ((0, 0), (4, 4)) 0
+  let arrayExample = newArray ((0, 0), (4, 4)) '0'
+  print $ show arrayExample
+
 main :: IO ()
 main = do
-  contents <- readFile "input.txt"
-  print $ words contents
+  mainWork "test.txt"

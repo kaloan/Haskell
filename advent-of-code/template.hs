@@ -11,13 +11,21 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
+import           Data.Array
 import           Data.List     (foldl')
+import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
 -- 01.12.21
 
 readInt :: String -> Int
 readInt = read
+
+readIntList :: String -> [Int]
+readIntList = read
+
+parseIntList :: String -> [Int]
+parseIntList s = read $ "[" ++ s ++ "]"
 
 main :: IO ()
 main = do
