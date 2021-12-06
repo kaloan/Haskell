@@ -22,6 +22,25 @@ import           System.IO
 
 -- 06.12.21
 
+histogram :: (Ord a, Eq a) => [a] -> [(a, Int)]
+histogram = go . sort id
+  where
+    go' x []              = [(x, 1)]
+    go' x r@((y, n) : ys) = if x == y then (y, succ n) : ys else (x, 1) : r
+    go = foldr go' []
+
+addZerosToHistogram :: [(Int, Int)] -> Int -> [(Int, Int)]
+addZerosToHistogram l m = go 0 l
+  where
+    go :: Int -> [(Int, Int)] -> [(Int, Int)]
+    go y []
+      | y > m = []
+      | otherwise = [(x, 0) | x <- [y .. m]]
+    go y ((x, n) : xs)
+      | y > m = []
+      | x > y = go y $ (y, 0) : (x, n) : xs
+      | otherwise = (x, n) : go (succ y) xs
+
 readInt :: String -> Int
 readInt = read
 
@@ -35,32 +54,21 @@ maxDaysTillBirth = 8
 standardDaysTillBirth :: Int
 standardDaysTillBirth = 6
 
-mainWork :: FilePath -> Integer -> IO ()
+sort :: (Ord b) => (a -> b) -> [a] -> [a]
+sort _ [] = []
+sort f (x : xs) = smaller ++ [x] ++ larger
+  where
+    smaller = sort f [y | y <- xs, f y < f x]
+    larger = sort f [y | y <- xs, f y >= f x]
+
+mainWork :: FilePath -> Int -> IO ()
 mainWork filename days = do
   contents <- readFile filename
   let nums = parseIntList contents
-  vec <- V.toMutableArray $ IV.fromList nums
-  -- vec <- do
-  --   v <- V.replicate 0 maxDaysTillBirth
-  --   let f [x] = V.modify v (+ 1) x
-  --   f (x:xs) <- do
-  --     V.modify v (+ 1) x
-  --     f xs
-  --   f nums
-
-  -- vec <- do
-  --   v <- V.replicate 0 maxDaysTillBirth
-  --   foldl' (\acc x -> V.modify v (+ 1) x) v nums
-  --   -- go nums
-  --   --   where
-  --   --     go [x] = V.modify v (+1) x
-  --   --     go (x:xs) = do
-  --   --       V.modify v (+1) x
-  --   --       go xs
-  --   IV.freeze v
-  --print $ show $ V.read vec 0
-  print $ IV.freeze vec
+  let histogramBasic = histogram nums
+  let fullHistogram = addZerosToHistogram histogramBasic maxDaysTillBirth
+  print fullHistogram
 
 main :: IO ()
-main = do
+main =
   mainWork "test.txt" 14
