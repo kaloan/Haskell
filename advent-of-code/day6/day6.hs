@@ -29,10 +29,9 @@ histogram = go . sort id
     go' x r@((y, n) : ys) = if x == y then (y, succ n) : ys else (x, 1) : r
     go = foldr go' []
 
-addZerosToHistogram :: [(Int, Int)] -> Int -> [(Int, Int)]
+addZerosToHistogram :: (Num a, Ord a, Enum a) => [(a, a)] -> a -> [(a, a)]
 addZerosToHistogram l m = go 0 l
   where
-    go :: Int -> [(Int, Int)] -> [(Int, Int)]
     go y []
       | y > m = []
       | otherwise = [(x, 0) | x <- [y .. m]]
@@ -40,6 +39,17 @@ addZerosToHistogram l m = go 0 l
       | y > m = []
       | x > y = go y $ (y, 0) : (x, n) : xs
       | otherwise = (x, n) : go (succ y) xs
+
+growUp :: (Num a) => [a] -> [a]
+growUp [] = error "Empty list to grow"
+growUp (x : xs) = afterGrow ++ [x]
+  where
+    growList = [if i == standardDaysTillBirth then x else 0 | i <- [0 .. pred maxDaysTillBirth]]
+    afterGrow = zipWith (+) xs growList
+
+iter :: (Num b, Eq b, Enum b) => (a -> a) -> a -> b -> a
+iter _ a 0 = a
+iter f a n = iter f (f a) $ pred n
 
 readInt :: String -> Int
 readInt = read
@@ -67,8 +77,10 @@ mainWork filename days = do
   let nums = parseIntList contents
   let histogramBasic = histogram nums
   let fullHistogram = addZerosToHistogram histogramBasic maxDaysTillBirth
-  print fullHistogram
+  let population = foldr ((:) . snd) [] fullHistogram
+  --print $ take days $ iterate growUp population
+  print $ sum $ iter growUp population days
 
 main :: IO ()
 main =
-  mainWork "test.txt" 14
+  mainWork "input.txt" 256
