@@ -31,7 +31,6 @@ sine x = stRound $ sum $ powerSeries' go go' 40 (x, 1)
     go' (y, acc) n = (negate $ x * x * y, acc * fromIntegral ((2 * n + 3) * (2 * n + 2)))
 
 cosine :: Double -> Double
---cosine x = stRound $ sum $ powerSeries go 40 x
 cosine x = stRound $ sum $ powerSeries' go go' 40 (1, 1)
   where
     go :: (Double, Double) -> Integer -> Double
