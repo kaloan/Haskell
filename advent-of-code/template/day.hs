@@ -11,8 +11,7 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.Array
-import           Data.List     (foldl')
+import           Data.List     (foldl', sort)
 import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
@@ -27,7 +26,11 @@ readIntList = read
 parseIntList :: String -> [Int]
 parseIntList s = read $ "[" ++ s ++ "]"
 
+mainWork :: FilePath -> IO ()
+mainWork filename = do
+  contents <- readFile filename
+  print $ words contents
+
 main :: IO ()
 main = do
-  contents <- readFile "input.txt"
-  print $ words contents
+  mainWork "test.txt"

@@ -11,12 +11,11 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.Array
 import           Data.List     (foldl')
 import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
--- 01.12.21
+-- 08.12.21
 
 readInt :: String -> Int
 readInt = read
