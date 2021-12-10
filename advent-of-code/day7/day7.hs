@@ -12,11 +12,12 @@
 
 import           Control.Monad
 import           Data.Array
-import           Data.List     (foldl')
+import           Data.List     (foldl', sort)
 import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
 -- 07.12.21
+
 absDiffOfConst :: (Num a) => [a] -> a -> a
 absDiffOfConst l c = sum $ map abs $ zipWith (-) l (replicate (length l) c)
 
@@ -46,13 +47,6 @@ medianInList l
       --     then x
       --     else y
 
-sort :: (Ord b) => (a -> b) -> [a] -> [a]
-sort _ [] = []
-sort f (x : xs) = smaller ++ [x] ++ larger
-  where
-    smaller = sort f [y | y <- xs, f y < f x]
-    larger = sort f [y | y <- xs, f y >= f x]
-
 readInt :: String -> Int
 readInt = read
 
@@ -65,8 +59,9 @@ parseIntList s = read $ "[" ++ s ++ "]"
 mainWork :: FilePath -> IO ()
 mainWork filename = do
   contents <- readFile filename
-  let crabPositions = sort id $ parseIntList contents
+  let crabPositions = sort $ parseIntList contents
   let len = length crabPositions
+  -- The median optimises E(|X-c|)
   let median = medianInList crabPositions
   print median
   print $ absDiffOfConst crabPositions median
@@ -74,10 +69,12 @@ mainWork filename = do
 mainWork' :: FilePath -> IO ()
 mainWork' filename = do
   contents <- readFile filename
-  let crabPositions = sort id $ parseIntList contents
+  let crabPositions = sort $ parseIntList contents
   let avg = average crabPositions
   -- let minModifiedDiff = foldl' (\acc x -> if modifiedDiffOfConst crabPositions x < modifiedDiffOfConst crabPositions acc then x else acc) 10000000000 [minimum crabPositions .. maximum crabPositions]
   -- print $ modifiedDiffOfConst crabPositions minModifiedDiff
+  -- The average value should either be the solution or a great heuristic for any input with range more than 3-4.
+  --As it optimises E((X-c)^2) it will most likely optimise E(0.5 * ((X-c)^2 + (X-c)))
   print $ modifiedDiffOfConst crabPositions (floor avg)
   print $ modifiedDiffOfConst crabPositions (ceiling avg)
 

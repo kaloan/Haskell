@@ -14,6 +14,7 @@ import           Control.Monad
 import           System.IO
 
 -- 02.12.21
+
 multPair :: (Num a) => (a, a) -> a
 multPair = uncurry (*)
 

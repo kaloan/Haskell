@@ -16,6 +16,7 @@ import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
 -- 10.12.21
+
 data IncompleteOrValWrong = Incomplete String | Wrong Integer
   deriving (Show)
 

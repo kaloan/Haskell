@@ -17,6 +17,7 @@ import           Data.Strings  (strSplit)
 import           System.IO
 
 -- 05.12.21
+
 type Point = (Int, Int)
 
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)

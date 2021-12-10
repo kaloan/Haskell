@@ -15,6 +15,7 @@ import           Data.List     (foldl', partition)
 import           System.IO
 
 -- 03.12.21
+
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
 mapPair f g (x, y) = (f x, g y)
 

@@ -14,7 +14,7 @@ module Main where
 
 import           Control.Monad
 import           Data.Array
-import           Data.List           (foldl')
+import           Data.List           (foldl', sort)
 import           Data.Strings        (strSplit, strSplitAll)
 import qualified Data.Vector         as IV
 import qualified Data.Vector.Mutable as V
@@ -23,7 +23,7 @@ import           System.IO
 -- 06.12.21
 
 histogram :: (Ord a, Eq a) => [a] -> [(a, Int)]
-histogram = go . sort id
+histogram = go . sort
   where
     go' x []              = [(x, 1)]
     go' x r@((y, n) : ys) = if x == y then (y, succ n) : ys else (x, 1) : r
@@ -63,13 +63,6 @@ maxDaysTillBirth = 8
 
 standardDaysTillBirth :: Int
 standardDaysTillBirth = 6
-
-sort :: (Ord b) => (a -> b) -> [a] -> [a]
-sort _ [] = []
-sort f (x : xs) = smaller ++ [x] ++ larger
-  where
-    smaller = sort f [y | y <- xs, f y < f x]
-    larger = sort f [y | y <- xs, f y >= f x]
 
 mainWork :: FilePath -> Int -> IO ()
 mainWork filename days = do
