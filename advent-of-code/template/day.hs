@@ -29,7 +29,8 @@ parseIntList s = read $ "[" ++ s ++ "]"
 mainWork :: FilePath -> IO ()
 mainWork filename = do
   contents <- readFile filename
-  print $ words contents
+  let lns = lines contents
+  print $ lns
 
 main :: IO ()
 main = do

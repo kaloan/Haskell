@@ -52,9 +52,13 @@ readInstruction ["down", x]    = Down $ read x
 readInstruction ["forward", x] = Forward $ read x
 readInstruction _              = error "Instruction list non formatted"
 
-main :: IO ()
-main = do
-  contents <- readFile "input.txt"
+mainWork :: FilePath -> IO ()
+mainWork filename = do
+  contents <- readFile filename
   let instructions = map (readInstruction . words) $ lines contents
   print $ day2Task instructions
   print $ day2Task' instructions
+
+main :: IO ()
+main = do
+  mainWork "input.txt"

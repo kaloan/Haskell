@@ -106,33 +106,16 @@ readBinary = map go
 readInteger :: String -> Integer
 readInteger = read
 
---readIntegerBinary :: String -> [Integer]
---readIntegerBinary = map readInteger
-
-diagnosticReportTest :: [Binary]
-diagnosticReportTest =
-  map
-    binaryInIntToBinary
-    [ [0, 0, 1, 0, 0],
-      [1, 1, 1, 1, 0],
-      [1, 0, 1, 1, 0],
-      [1, 0, 1, 1, 1],
-      [1, 0, 1, 0, 1],
-      [0, 1, 1, 1, 1],
-      [0, 0, 1, 1, 1],
-      [1, 1, 1, 0, 0],
-      [1, 0, 0, 0, 0],
-      [1, 1, 0, 0, 1],
-      [0, 0, 0, 1, 0],
-      [0, 1, 0, 1, 0]
-    ]
-
-main :: IO ()
-main = do
-  contents <- readFile "input.txt"
-  let diagnosticReport = map readBinary $ words contents
+mainWork :: FilePath -> IO ()
+mainWork filename = do
+  contents <- readFile filename
+  let diagnosticReport = map readBinary $ lines contents
   let powCons = powerConsumption diagnosticReport
   let oGR = oxygenGeneratorRating diagnosticReport
   let co2SR = co2ScrubberRating diagnosticReport
   print powCons
   print $ oGR * co2SR
+
+main :: IO ()
+main = do
+  mainWork "input.txt"
