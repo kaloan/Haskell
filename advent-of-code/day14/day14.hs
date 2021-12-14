@@ -14,6 +14,7 @@ import           Control.Monad
 import           Data.Foldable    (toList)
 import           Data.List        (foldl', sort)
 import           Data.List.Unique
+import qualified Data.Map         as Map
 import           Data.Sequence    hiding (lookup)
 import           Data.Strings     (strSplit, strSplitAll)
 import           System.IO
@@ -29,6 +30,30 @@ polymerise = go Empty
       case lookup [x, y] rules of
         Just c  -> go (acc |> x |> c) (y :<| xs) rules
         Nothing -> go (acc |> x) (y :<| xs) rules
+
+constructMap :: (Ord a) => [a] -> Map.Map (a, a) Integer
+constructMap = go Map.empty
+  where
+    go m []           = m
+    go m [_]          = m
+    go m (x : y : xs) = go (Map.insertWith (+) (x, y) 1 m) (y : xs)
+
+decreaseOfStartAndEnd :: (Ord a) => a -> a -> Map.Map a Integer -> Map.Map a Integer
+decreaseOfStartAndEnd s e mapped = Map.insertWith ensureOne e 1 (Map.insertWith ensureOne s 1 mapped)
+  where
+    -- In the rare case the final ones don't appear anywhere else
+    ensureOne 1 1   = 1
+    ensureOne 1 old = old - 1
+
+pairToCharCounts :: (Ord a) => Map.Map (a, a) Integer -> Map.Map a Integer
+pairToCharCounts m = go Map.empty $ Map.toList m
+  where
+    go final [] = final
+    go counts (((x, y), cnt) : xs) =
+      go (Map.insertWith (+) x cnt (Map.insertWith (+) y cnt counts)) xs
+
+mapPolymerise :: (Ord a) => Map.Map (a, a) Integer -> Map.Map (a, a) a -> Map.Map (a, a) Integer
+mapPolymerise = undefined
 
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
 mapPair f g (x, y) = (f x, g y)
@@ -56,6 +81,18 @@ mainWork filename = do
   print counts
   print maxDiff
 
+mainWork' :: FilePath -> IO ()
+mainWork' filename = do
+  contents <- readFile filename
+  let (initPolymer, rules') = strSplit "\n\n" contents
+  let rules = Map.fromList $ map (mapPair (\str -> (head str, last str)) head . strSplit " -> ") (lines rules')
+  let initialPairs = constructMap initPolymer
+  let finalCounts = decreaseOfStartAndEnd (head initPolymer) (last initPolymer) $ pairToCharCounts initialPairs
+  print finalCounts
+  print $ pairToCharCounts initialPairs
+  print rules
+
 main :: IO ()
 main =
-  mainWork "input.txt"
+  --mainWork "test.txt"
+  mainWork' "test.txt"
