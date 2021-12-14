@@ -49,11 +49,17 @@ pairToCharCounts :: (Ord a) => Map.Map (a, a) Integer -> Map.Map a Integer
 pairToCharCounts m = go Map.empty $ Map.toList m
   where
     go final [] = final
-    go counts (((x, y), cnt) : xs) =
-      go (Map.insertWith (+) x cnt (Map.insertWith (+) y cnt counts)) xs
+    go counts (((x, y), cnt) : pairCounts) =
+      go (Map.insertWith (+) x cnt (Map.insertWith (+) y cnt counts)) pairCounts
 
 mapPolymerise :: (Ord a) => Map.Map (a, a) Integer -> Map.Map (a, a) a -> Map.Map (a, a) Integer
-mapPolymerise = undefined
+mapPolymerise m = go Map.empty (Map.assocs m)
+  where
+    go res [] _ = res
+    go res (((x, y), cnt) : pairCounts) rules =
+      case Map.lookup (x, y) rules of
+        Nothing -> go (Map.insert (x, y) cnt res) pairCounts rules
+        Just c -> go (Map.insertWith (+) (x, c) cnt (Map.insertWith (+) (c, y) cnt res)) pairCounts rules
 
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
 mapPair f g (x, y) = (f x, g y)
@@ -67,6 +73,8 @@ readIntList = read
 parseIntList :: String -> [Int]
 parseIntList s = read $ "[" ++ s ++ "]"
 
+-- Works fine for small inputs and short time
+-- Otherwise you do O(polymer length) work for one insertion
 mainWork :: FilePath -> IO ()
 mainWork filename = do
   contents <- readFile filename
@@ -84,15 +92,19 @@ mainWork filename = do
 mainWork' :: FilePath -> IO ()
 mainWork' filename = do
   contents <- readFile filename
-  let (initPolymer, rules') = strSplit "\n\n" contents
+  let (initPolymer', rules') = strSplit "\n\n" contents
   let rules = Map.fromList $ map (mapPair (\str -> (head str, last str)) head . strSplit " -> ") (lines rules')
-  let initialPairs = constructMap initPolymer
-  let finalCounts = decreaseOfStartAndEnd (head initPolymer) (last initPolymer) $ pairToCharCounts initialPairs
-  print finalCounts
-  print $ pairToCharCounts initialPairs
-  print rules
+  let initPolymer = constructMap initPolymer'
+  --print rules
+  let finalPolymer = foldl' (\polymer _ -> mapPolymerise polymer rules) initPolymer [1 .. 40]
+  let finalCounts = Map.toList $ decreaseOfStartAndEnd (head initPolymer') (last initPolymer') $ pairToCharCounts finalPolymer
+  let sortedFinalCounts = Data.List.sort $ map (\(x, y) -> (y, x)) finalCounts
+  print sortedFinalCounts
+  let maxDiff = fst (last sortedFinalCounts) - fst (head sortedFinalCounts)
+  --Off by -1 for some reason, not sure why
+  print $ div maxDiff 2
 
 main :: IO ()
 main =
   --mainWork "test.txt"
-  mainWork' "test.txt"
+  mainWork' "input.txt"
