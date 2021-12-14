@@ -74,45 +74,54 @@ parseIntList :: String -> [Int]
 parseIntList s = read $ "[" ++ s ++ "]"
 
 -- Works fine for small inputs and short time
--- Otherwise you do O(polymer length) work for one insertion
-mainWork :: FilePath -> IO ()
-mainWork filename = do
+-- Otherwise you do O(polymerLength) work for one insertion
+mainWork :: FilePath -> Integer -> IO ()
+mainWork filename iters = do
   contents <- readFile filename
   let (initPolymer', rules') = strSplit "\n\n" contents
   let initPolymer = fromList initPolymer'
   let rules = map (mapPair id head . strSplit " -> ") (lines rules')
   --print $ initPolymer
   --print $ rules
-  let finalPolymer = toList $ foldl' (\polymer _ -> polymerise polymer rules) initPolymer [1 .. 10]
+  let finalPolymer = toList $ foldl' (\polymer _ -> polymerise polymer rules) initPolymer [1 .. iters]
   let counts = occurrences finalPolymer
   let maxDiff = fst (last counts) - fst (head counts)
   print counts
   print maxDiff
 
--- Most of the resulting elements would be in 2 pairs and as such pairToCharCounts
--- would give us twice their ammount. However the elements in starting and ending
--- positions will never be counted twice and so we need to divide only the number of the
--- ones in the interrior
-ceilDiv :: (Integral a) => a -> a -> a
-ceilDiv x y
-  | even x = x `div` y
-  | otherwise = 1 + x `div` y
+succAtLetter :: (Integral a, Eq b) => b -> (a, b) -> (a, b)
+succAtLetter x (cnt, letter) =
+  if letter == x
+    then (cnt + 1, letter)
+    else (cnt, letter)
 
-mainWork' :: FilePath -> IO ()
-mainWork' filename = do
+-- Now we have to do O(typesOfPairs*(log(typesOfPairs) + log(numberOfRules))) work for one insertion
+-- typesOfPairs because we do a simple recursion/iteration over the list and for each one we:
+-- lookup for a rule (the second summand)
+-- push to the current map which in the final pair would have size typesOfPairs (the first summand)
+-- Notice that the maximumTypesOfPairs and numberOrRules are actually finite in the whole program, unlike
+-- the previous algorithm where polymerLength increases after each insertion
+mainWork' :: FilePath -> Integer -> IO ()
+mainWork' filename iters = do
   contents <- readFile filename
   let (initPolymer', rules') = strSplit "\n\n" contents
   let rules = Map.fromList $ map (mapPair (\str -> (head str, last str)) head . strSplit " -> ") (lines rules')
   let initPolymer = constructMap initPolymer'
   --print rules
-  let finalPolymer = foldl' (\polymer _ -> mapPolymerise polymer rules) initPolymer [1 .. 40]
-  let finalCounts = Map.toList $ pairToCharCounts finalPolymer
-  let sortedFinalCounts = Data.List.sort $ map (\(letter, cnt) -> (ceilDiv cnt 2, letter)) finalCounts
+  let finalPolymer = foldl' (\polymer _ -> mapPolymerise polymer rules) initPolymer [1 .. iters]
+  let finalCounts'' = Map.toList $ pairToCharCounts finalPolymer
+  let finalCounts' = map (\(letter, cnt) -> (div cnt 2, letter)) finalCounts''
+  -- Most of the resulting elements would be in 2 pairs and as such pairToCharCounts
+  -- would give us twice their ammount. However the elements in starting and ending
+  -- positions will never be counted twice and so we need to divide only the number of the
+  -- ones in the interrior
+  let finalCounts = map (succAtLetter (last initPolymer') . succAtLetter (head initPolymer')) finalCounts'
+  let sortedFinalCounts = Data.List.sort finalCounts
   print sortedFinalCounts
   let maxDiff = fst (last sortedFinalCounts) - fst (head sortedFinalCounts)
   print maxDiff
 
 main :: IO ()
 main =
-  --mainWork "test.txt"
-  mainWork' "input.txt"
+  --mainWork "test.txt" 40
+  mainWork' "input.txt" 40
