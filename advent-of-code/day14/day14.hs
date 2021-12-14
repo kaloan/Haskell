@@ -89,6 +89,15 @@ mainWork filename = do
   print counts
   print maxDiff
 
+-- Most of the resulting elements would be in 2 pairs and as such pairToCharCounts
+-- would give us twice their ammount. However the elements in starting and ending
+-- positions will never be counted twice and so we need to divide only the number of the
+-- ones in the interrior
+ceilDiv :: (Integral a) => a -> a -> a
+ceilDiv x y
+  | even x = x `div` y
+  | otherwise = 1 + x `div` y
+
 mainWork' :: FilePath -> IO ()
 mainWork' filename = do
   contents <- readFile filename
@@ -97,12 +106,11 @@ mainWork' filename = do
   let initPolymer = constructMap initPolymer'
   --print rules
   let finalPolymer = foldl' (\polymer _ -> mapPolymerise polymer rules) initPolymer [1 .. 40]
-  let finalCounts = Map.toList $ decreaseOfStartAndEnd (head initPolymer') (last initPolymer') $ pairToCharCounts finalPolymer
-  let sortedFinalCounts = Data.List.sort $ map (\(x, y) -> (y, x)) finalCounts
+  let finalCounts = Map.toList $ pairToCharCounts finalPolymer
+  let sortedFinalCounts = Data.List.sort $ map (\(letter, cnt) -> (ceilDiv cnt 2, letter)) finalCounts
   print sortedFinalCounts
   let maxDiff = fst (last sortedFinalCounts) - fst (head sortedFinalCounts)
-  --Off by -1 for some reason, not sure why
-  print $ div maxDiff 2
+  print maxDiff
 
 main :: IO ()
 main =
