@@ -62,7 +62,7 @@ mainWork filename = do
   let cols = succ $ maximum $ map fst endCoords
   let rows = succ $ maximum $ map snd endCoords
   let matrixStart = zero rows cols
-  print $ foldl' (\acc (x, y) -> setElem 1 (succ y, succ x) acc) matrixStart endCoords
+  print $ foldl' (\acc (x, y) -> setElem 11 (succ y, succ x) acc) matrixStart endCoords
 
 main :: IO ()
 main =
