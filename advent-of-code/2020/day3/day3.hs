@@ -13,6 +13,7 @@
 import           Control.Monad
 import           Data.List        (delete, foldl', sort)
 import           Data.List.Unique
+import           Data.Matrix
 import           Data.Maybe
 import           Data.Strings     (strSplit, strSplitAll)
 import           System.IO
