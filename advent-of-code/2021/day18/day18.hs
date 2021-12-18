@@ -22,6 +22,9 @@ import           System.IO
 -- 18.12.21
 data Pair a = E a | P (Pair a, Pair a) deriving (Show, Read, Eq)
 
+addP :: Pair a -> Pair a -> Pair a
+addP = curry P
+
 magnitude :: (Num a) => Pair a -> a
 magnitude (E x)             = x
 magnitude (P (left, right)) = 3 * magnitude left + 2 * magnitude right
@@ -38,6 +41,27 @@ split (P (left, right)) = do
   if leftChanged
     then (P (newLeft, right), True)
     else (P (left, newRight), rightChanged)
+
+addToLeftMost :: (Num a) => Pair a -> a -> Pair a
+addToLeftMost (E x) y    = E $ x + y
+addToLeftMost P (u, v) y = P (addToLeftMost u y, v)
+
+addToRightMost :: (Num a) => Pair a -> a -> Pair a
+addToRightMost (E x) y    = E $ x + y
+addToRightMost P (u, v) y = P (u, addToRightMost v y)
+
+explode :: (Num a) => Pair a -> (Pair a, Bool)
+-- Leftmost
+explode (P (P (P (P (P (E x, E y), r1), r2), r3), r4)) =
+  (P (P (P (P (E 0, addToLeftMost r1 y), r2), r3), r4), True)
+-- Rightmost
+explode (P (l4, P (l3, P (l2, P (l1, P (E x, E y)))))) =
+  (P (l4, P (l3, P (l2, P (addToRightMost l1 y, E 0)))), True)
+explode (P (P (P (P (l1, P (E x, E y)), r1), r2), r3)) =
+  (P (P (P (P (addToRightMost l1 x, E 0), addToLeftMost r1 y), r2), r3), True)
+explode (P (l3, P (l2, P (l1, P (P (E x, E y), r1))))) =
+  (P (l3, P (l2, P (addToRightMost l1 x, P (E 0, addToLeftMost r1 y)))), True)
+explode x = (x, False)
 
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
 mapPair f g (x, y) = (f x, g y)
