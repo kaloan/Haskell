@@ -22,9 +22,6 @@ import           System.IO
 -- 18.12.21
 data Pair a = E a | P (Pair a, Pair a) deriving (Show, Read, Eq)
 
-addP :: Pair a -> Pair a -> Pair a
-addP = curry P
-
 magnitude :: (Num a) => Pair a -> a
 magnitude (E x)             = x
 magnitude (P (left, right)) = 3 * magnitude left + 2 * magnitude right
@@ -43,25 +40,51 @@ split (P (left, right)) = do
     else (P (left, newRight), rightChanged)
 
 addToLeftMost :: (Num a) => Pair a -> a -> Pair a
-addToLeftMost (E x) y    = E $ x + y
-addToLeftMost P (u, v) y = P (addToLeftMost u y, v)
+addToLeftMost (E x) y      = E $ x + y
+addToLeftMost (P (u, v)) y = P (addToLeftMost u y, v)
 
 addToRightMost :: (Num a) => Pair a -> a -> Pair a
-addToRightMost (E x) y    = E $ x + y
-addToRightMost P (u, v) y = P (u, addToRightMost v y)
+addToRightMost (E x) y      = E $ x + y
+addToRightMost (P (u, v)) y = P (u, addToRightMost v y)
 
 explode :: (Num a) => Pair a -> (Pair a, Bool)
 -- Leftmost
-explode (P (P (P (P (P (E x, E y), r1), r2), r3), r4)) =
+explode (P (P (P (P (P (E _, E y), r1), r2), r3), r4)) =
   (P (P (P (P (E 0, addToLeftMost r1 y), r2), r3), r4), True)
 -- Rightmost
-explode (P (l4, P (l3, P (l2, P (l1, P (E x, E y)))))) =
-  (P (l4, P (l3, P (l2, P (addToRightMost l1 y, E 0)))), True)
+explode (P (l4, P (l3, P (l2, P (l1, P (E x, E _)))))) =
+  (P (l4, P (l3, P (l2, P (addToRightMost l1 x, E 0)))), True)
+-- One right of leftmost
 explode (P (P (P (P (l1, P (E x, E y)), r1), r2), r3)) =
   (P (P (P (P (addToRightMost l1 x, E 0), addToLeftMost r1 y), r2), r3), True)
+-- One left of rightmost
 explode (P (l3, P (l2, P (l1, P (P (E x, E y), r1))))) =
   (P (l3, P (l2, P (addToRightMost l1 x, P (E 0, addToLeftMost r1 y)))), True)
+-- With one right outside
+explode (P (P (l3, P (l2, P (l1, P (E x, E y)))), r1)) =
+  (P (P (l3, P (l2, P (addToRightMost l1 x, E 0))), addToLeftMost r1 y), True)
+explode (P (P (l2, P (l1, P (P (E x, E y), r1))), r2)) =
+  (P (P (l2, P (addToRightMost l1 x, P (E 0, addToLeftMost r1 y))), r2), True)
+-- With one left outside
+explode (P (l1, P (P (P (P (E x, E y), r1), r2), r3))) =
+  (P (addToRightMost l1 x, P (P (P (E 0, addToLeftMost r1 y), r2), r3)), True)
+explode (P (l2, P (P (P (l1, P (E x, E y)), r1), r2))) =
+  (P (l2, P (P (P (addToRightMost l1 x, E 0), addToLeftMost r1 y), r2)), True)
+-- When there aren't 5 nested pairs
 explode x = (x, False)
+
+reduce :: (Num a, Integral a) => Pair a -> Pair a
+reduce x
+  | snd exploded = reduce $ fst exploded
+  | snd splitted = reduce $ fst splitted
+  | otherwise = x
+  where
+    exploded = explode x
+    splitted = split x
+
+addP :: (Num a, Integral a) => Pair a -> Pair a -> Pair a
+--addP = curry P
+addP x y = reduce $ P (x, y)
 
 mapPair :: (a -> c) -> (b -> d) -> (a, b) -> (c, d)
 mapPair f g (x, y) = (f x, g y)
@@ -96,8 +119,12 @@ mainWork filename = do
   let pairs = map parsePair $ lines contents
   -- let testSplit = P (P (P (P (E 0, E 7), E 4), P (E 15, P (E 0, E 13))), P (E 1, E 1))
   -- print $ split $ fst $ split testSplit
-  print pairs
+  --print pairs
+  -- print $ explode $ head pairs
+  let res = foldl' addP (head pairs) (tail pairs)
+  print res
+  print $ magnitude res
 
 main :: IO ()
 main =
-  mainWork "test1.txt"
+  mainWork "test4.txt"
