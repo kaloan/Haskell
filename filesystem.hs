@@ -2,6 +2,7 @@
 
 import           Control.Monad
 import           Data.List     (foldl')
+import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
 type Directory = String
@@ -33,10 +34,20 @@ getDirectoryContents dir (Directory dot parent contents) =
     else concatMap (getDirectoryContents dir) contents
 
 dirExists :: Directory -> FS -> Bool
-dirExists dir (File _) = False
-dirExists dir (Directory dot parent contents) =
-  let resInDeeper = map (dirExists dir) contents
-   in (dir == dot) || or resInDeeper
+dirExists = dirExists' ""
+  where
+    dirExists' _ dir (File _) = False
+    dirExists' acc dir (Directory dot parent contents) =
+      let resInDeeper = map (dirExists' (acc ++ parent) dir) contents
+       in (dir == "/" && dot == "/") || (dir == (acc ++ dot)) || or resInDeeper
+
+mkdir :: Directory -> FS -> FS
+mkdir dir fs =
+  let dirList = strSplitAll "/" dir
+   in mkdir' dirList fs
+  where
+    mkdir' [] fs = fs
+    mkdir' [name] (Directory dot parent contents) = Directory dot parent $ Directory name dot [] : contents
 
 mainWork :: State -> FS -> IO ()
 mainWork state@State {cwd = cwd, fwd = fwd} fs = do
@@ -47,6 +58,8 @@ mainWork state@State {cwd = cwd, fwd = fwd} fs = do
     ["pwd"] -> do
       putStrLn cwd
       mainWork State {cwd = cwd, fwd = fwd} fs
+    ["cd"] -> do
+      mainWork State {cwd = "/", fwd = "/"} fs
     ["cd", name] -> do
       let fullname = getFullName name state
       if not $ dirExists fullname fs
@@ -59,8 +72,25 @@ mainWork state@State {cwd = cwd, fwd = fwd} fs = do
     ["ls"] -> do
       print $ getDirectoryContents cwd fs
       mainWork State {cwd = cwd, fwd = fwd} fs
+    ["ls", name] -> do
+      let fullname = getFullName name state
+      if not $ dirExists fullname fs
+        then do
+          putStrLn $ "Directory " ++ fullname ++ " does not exist!"
+        else do
+          print $ getDirectoryContents fullname fs
+      mainWork State {cwd = cwd, fwd = fwd} fs
+    ["mkdir", name] -> do
+      let fullname = getFullName name state
+      if dirExists fullname fs
+        then do
+          putStrLn $ "Directory " ++ fullname ++ " already exists!"
+          mainWork State {cwd = cwd, fwd = fwd} fs
+        else do
+          print $ "Created directory " ++ fullname
+          mainWork State {cwd = cwd, fwd = fwd} (mkdir fullname fs)
     xs -> print xs
 
 main :: IO ()
 main =
-  mainWork (State {cwd = "/", fwd = "/"}) (Directory "/" "/" [])
+  mainWork (State {cwd = "/", fwd = "/"}) (Directory "/" "/" [Directory "asdf" "/" []])

@@ -18,7 +18,8 @@ import           Data.List.Unique
 import           Data.Strings     (strSplit, strSplitAll)
 import           System.IO
 
--- 12.12.17
+-- 15.12.17
+
 agree :: Int -> Int -> Int -> Bool
 agree agreeNum x y = x .&. agreeNum == y .&. agreeNum
 
