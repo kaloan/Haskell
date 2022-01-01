@@ -11,11 +11,11 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.Char     (isLetter, toUpper)
-import           Data.List     (find, foldl', sort)
-import           Data.Map      hiding (map)
-import           Data.Maybe    (fromJust)
-import           Data.Strings  (strSplit, strSplitAll)
+import           Data.Char       (isLetter, toUpper)
+import           Data.List       (find, foldl', sort)
+import           Data.Map.Strict hiding (foldl', map)
+import           Data.Maybe      (fromJust)
+import           Data.Strings    (strSplit, strSplitAll)
 import           System.IO
 
 -- 24.12.21
@@ -28,7 +28,7 @@ data Second = Register Register | Num Int deriving (Read, Show)
 data Instruction
   = Inp Register
   | Add Register Second
-  | Mult Register Second
+  | Mul Register Second
   | Div Register Second
   | Mod Register Second
   | Eql Register Second
@@ -42,21 +42,43 @@ boolToInt :: Bool -> Int
 boolToInt True  = 1
 boolToInt False = 0
 
+getSecond :: Instruction -> (Register, Second)
+getSecond (Inp _)          = undefined
+getSecond (Add reg second) = (reg, second)
+getSecond (Mul reg second) = (reg, second)
+getSecond (Div reg second) = (reg, second)
+getSecond (Mod reg second) = (reg, second)
+getSecond (Eql reg second) = (reg, second)
+
 opToFunc :: Instruction -> (Int -> Int -> Int)
-opToFunc (Inp _)    = flip const
-opToFunc (Add _ _)  = (+)
-opToFunc (Mult _ _) = (*)
-opToFunc (Div _ _)  = div
-opToFunc (Mod _ _)  = mod
+opToFunc (Inp _)   = \_ x -> x
+opToFunc (Add _ _) = (+)
+opToFunc (Mul _ _) = (*)
+opToFunc (Div _ _) = div
+opToFunc (Mod _ _) = mod
 -- opToFunc (Eql _ _)  = boolToInt . (==)
-opToFunc (Eql _ _)  = \x y -> boolToInt $ x == y
+opToFunc (Eql _ _) = \x y -> boolToInt $ x == y
 
 calculate :: Instruction -> Maybe Int -> Map Register Int -> Map Register Int
 calculate = undefined
 
-execute :: [Instruction] -> ModelNumber -> ModelNumber
+execute :: [Instruction] -> ModelNumber
 execute program =
-  reverse $ snd $ fromJust $ find fst [go n (False, []) program | n <- [9 .. 1]]
+  reverse $ snd $ go [] program initRegisters
+  where
+    go :: ModelNumber -> [Instruction] -> Map Register Int -> (Bool, ModelNumber)
+    go given [] regs =
+      (regs ! 'z' == 0, given)
+    go given ((Inp reg) : program) regs =
+      case find fst [go (n : given) program (insert reg n regs) | n <- [9 .. 1]] of
+        Nothing             -> (False, given)
+        Just (True, proper) -> (True, proper)
+    go given (instruction : program) regs =
+      case getSecond instruction of
+        (reg, Num n) ->
+          go given program (insertWith (opToFunc instruction) reg n regs)
+        (reg, Register otherReg) ->
+          go given program (insertWith (opToFunc instruction) reg (regs ! reg) regs)
 
 registers :: [Register]
 registers = ['x', 'y', 'z', 'w']
@@ -96,10 +118,10 @@ mainWork :: FilePath -> IO ()
 mainWork filename = do
   contents <- readFile filename
   let lns = lines contents
-  let parsed = map parseInstruction lns
-  print $ map (strSplitAll " ") lns
-  print parsed
+  let program = map parseInstruction lns
+  print program
+  print $ execute program
 
 main :: IO ()
-main = do
-  mainWork "test.txt"
+main =
+  mainWork "input.txt"
