@@ -11,7 +11,8 @@
 {-# OPTIONS_GHC -fwarn-unused-matches #-}
 
 import           Control.Monad
-import           Data.List     (foldl', sort)
+import           Data.List     (find, foldl', sort)
+import           Data.Maybe    (fromJust)
 import           Data.Strings  (strSplit, strSplitAll)
 import           System.IO
 
